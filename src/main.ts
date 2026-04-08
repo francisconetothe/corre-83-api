@@ -10,14 +10,28 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // 🛠️ Ajuste de CORS dinâmico
-  // No Render, FRONTEND_URL será https://seu-site.vercel.app
-  // Localmente, ele usará http://localhost:3000
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const frontendUrl = process.env.FRONTEND_URL;
+  const allowedOrigins = ['http://localhost:3000'];
+
+  if (frontendUrl) {
+    // Remove barra no final se o usuário tiver colocado por engano no Render
+    allowedOrigins.push(frontendUrl.replace(/\/$/, ""));
+  }
 
   app.enableCors({
-    origin: [frontendUrl, 'http://localhost:3000'], // Aceita os dois para facilitar testes
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (como mobile ou Postman) ou se estiver na lista
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        logger.warn(`CORS bloqueado para a origem: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(new ValidationPipe({
@@ -27,15 +41,16 @@ async function bootstrap() {
   }));
 
   // 🖼️ SERVIR ARQUIVOS ESTÁTICOS
-  // Render usa a raiz do projeto, mas localmente dist/.. também funciona
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   const port = process.env.PORT || 3001;
-  await app.listen(port, '0.0.0.0'); // '0.0.0.0' é importante para o Render encontrar a porta
+  
+  // No Render, a porta é dinâmica. '0.0.0.0' é essencial.
+  await app.listen(port, '0.0.0.0'); 
   
   const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
   
   logger.log(`🚀 API rodando em: ${baseUrl}`);
-  logger.log(`📂 Uploads em: ${baseUrl}/uploads`);
+  logger.log(`🔗 Frontend autorizado: ${allowedOrigins.join(', ')}`);
 }
 bootstrap();
