@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  name     String // Removi o ? para ser obrigatório
+  password String // <-- ADICIONE ESTA LINHA
+}
+
+// --- Institucional & Relacionamento ---
+model AboutUs {
+  id            String   @id @default(uuid())
+  content       String   @db.Text
+  imageUrl      String?  // Banner Principal
+  logoUrl       String?  // Logo Oficial
+  aboutImageUrl String?  // Foto lateral do Quem Somos (ADICIONADO)
+  updatedAt     DateTime @updatedAt
+}
+
+model Service {
+  id          String  @id @default(uuid())
+  title       String
+  description String  @db.Text
+  icon        String? // Nome do ícone ou URL
+}
+
+model Partner {
+  id        String  @id @default(uuid())
+  name      String
+  logoUrl   String
+  website   String?
+  isSponsor Boolean @default(false) // Diferencia Parceiro de Patrocinador
+}
+
+model SocialMedia {
+  id       String @id @default(uuid())
+  platform String // Instagram, YouTube, etc.
+  url      String
+}
+
+// --- Operacional ---
+model TrialClass {
+  id        String   @id @default(uuid())
+  name      String
+  whatsapp  String
+  email     String
+  status    String   @default("pending") // pending, confirmed, cancelled
+  createdAt DateTime @default(now())
+}
+
+model ClassSchedule {
+  id        String  @id @default(uuid())
+  dayOfWeek String  // Segunda, Terça...
+  time      String  // 06:00
+  activity  String  // Treino de Rodagem, HIIT...
+  location  String?
+}
+
+// --- Eventos & Provas ---
+model InternalEvent {
+  id          String   @id @default(uuid())
+  title       String
+  date        DateTime
+  description String?  @db.Text
+  imageUrl    String?
+}
+
+model RaceCalendar {
+  id       String   @id @default(uuid())
+  name     String
+  date     DateTime
+  city     String   // Patos ou Região
+  category String   // "Patos" ou "Regiao" para filtrar fácil
+  link     String?  // Link para inscrição
+  imageUrl String?
+}
+
+// --- Conteúdo & E-commerce ---
+model Columnist {
+  id       String    @id @default(uuid())
+  name     String
+  bio      String?   @db.Text
+  photoUrl String?
+  articles Article[]
+}
+
+model Article {
+  id          String    @id @default(uuid())
+  title       String
+  content     String    @db.Text
+  imageUrl    String?
+  columnistId String
+  columnist   Columnist @relation(fields: [columnistId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model Store {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  link        String  // Link do WhatsApp ou E-commerce
+  imageUrl    String?
+}
