@@ -8,6 +8,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { SettingsController } from './settings/settings.controller'; // 1. Importe aqui
 import { ProvasModule } from './provas/provas.module';
 import { ArtigosModule } from './artigos/artigos.module';
+import { PlansModule } from './plans/plans.module';
+import { PartnersModule } from './partners/partners.module';
+import { ColumnistsModule } from './columnists/columnists.module';
+
 
 @Module({
   imports: [
@@ -19,6 +23,9 @@ import { ArtigosModule } from './artigos/artigos.module';
     AuthModule,
     ProvasModule,
     ArtigosModule,
+    PlansModule,
+    PartnersModule,
+    ColumnistsModule,    
   ],
   controllers: [
     AppController, 

@@ -108,3 +108,16 @@ model Store {
   link        String  // Link do WhatsApp ou E-commerce
   imageUrl    String?
 }
+
+model Plan {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       String
+  description String   @db.Text
+  benefits    String   @db.Text // Vamos salvar como string separada por vírgula ou JSON
+  isFeatured  Boolean  @default(false)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

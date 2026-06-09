@@ -10,15 +10,11 @@ export class ArtigosService {
       data: {
         title: data.title,
         content: data.content,
-        imageUrl: data.imageUrl, // <-- ADICIONADO PARA SALVAR A FOTO
-        // Como seu schema exige um Columnist, vamos criar um fixo ou usar o ID
-        // Para simplificar, garantimos que existe um colunista padrão
+        imageUrl: data.imageUrl,
+        // Agora usamos o connect direto, ligando o artigo ao colunista real escolhido no painel
         columnist: {
-          connectOrCreate: {
-            where: { id: 'default-columnist' },
-            create: { id: 'default-columnist', name: data.columnistName || 'Colunista Correria' }
-          }
-        }
+          connect: { id: data.columnistId },
+        },
       },
     });
   }
@@ -26,7 +22,7 @@ export class ArtigosService {
   async listar() {
     return this.prisma.article.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { columnist: true } // Para pegar o nome do autor
+      include: { columnist: true }, // Para pegar o nome do autor
     });
   }
 
