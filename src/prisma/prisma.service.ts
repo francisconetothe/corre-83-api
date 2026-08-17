@@ -1,14 +1,23 @@
 // path: src/prisma/prisma.service.ts
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  constructor() {
+    const adapter = new PrismaMariaDb(process.env.DATABASE_URL as string);
+    super({ adapter });
+  }
+
   async onModuleInit() {
-    await this.$connect(); // Conecta no banco assim que o Nest sobe
+    await this.$connect();
   }
 
   async onModuleDestroy() {
-    await this.$disconnect(); // Fecha a conexão quando o Nest desliga
+    await this.$disconnect();
   }
 }
