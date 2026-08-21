@@ -1,9 +1,10 @@
-import 'dotenv/config'; 
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { join } from 'path';
 import * as express from 'express';
+import { PrismaService } from './database/prisma/prisma.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,13 +15,13 @@ async function bootstrap() {
   const allowedOrigins = ['http://localhost:3000'];
 
   if (frontendUrl) {
-    // Remove barra no final se o usuário tiver colocado por engano no Render
-    allowedOrigins.push(frontendUrl.replace(/\/$/, ""));
+    // Remove barra no final se o usuário tiver colocado por engano
+    allowedOrigins.push(frontendUrl.replace(/\/$/, ''));
   }
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Permite requisições sem origin (como mobile ou Postman) ou se estiver na lista
+      // Permite requisições sem origin (mobile/Postman) ou se estiver na lista
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -34,23 +35,31 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // 🖼️ SERVIR ARQUIVOS ESTÁTICOS
   app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
   const port = process.env.PORT || 3001;
-  
-  // No Render, a porta é dinâmica. '0.0.0.0' é essencial.
-  await app.listen(port, '0.0.0.0'); 
-  
+
+  // 🚀 LISTEN PRIMEIRO — garante que o app "escuta" dentro dos 3s da Hostinger
+  await app.listen(port, '0.0.0.0');
+
   const baseUrl = process.env.BASE_URL || `http://localhost:${port}`;
-  
   logger.log(`🚀 API rodando em: ${baseUrl}`);
   logger.log(`🔗 Frontend autorizado: ${allowedOrigins.join(', ')}`);
+
+  // 🔌 CONEXÃO COM O BANCO DEPOIS do listen (não bloqueia o boot)
+  app
+    .get(PrismaService)
+    .$connect()
+    .then(() => logger.log('✅ MySQL conectado'))
+    .catch((err) => logger.error('⚠️ MySQL indisponível: ' + err.message));
 }
 bootstrap();
