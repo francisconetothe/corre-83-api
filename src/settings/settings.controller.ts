@@ -4,6 +4,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Get,
+  Delete,
   BadRequestException,
   Body,
 } from '@nestjs/common';
@@ -159,6 +160,39 @@ export class SettingsController {
       update: { content: body.content },
       create: { id: 'main-config', content: body.content },
     });
+  }
+
+  // --- REMOVER BANNER ---
+  @Delete('banner')
+  async removeBanner() {
+    await this.prisma.aboutUs.upsert({
+      where: { id: 'main-config' },
+      update: { imageUrl: null },
+      create: { id: 'main-config', content: 'Configurações Gerais' },
+    });
+    return { message: 'Banner removido' };
+  }
+
+  // --- REMOVER LOGO ---
+  @Delete('logo')
+  async removeLogo() {
+    await this.prisma.aboutUs.upsert({
+      where: { id: 'main-config' },
+      update: { logoUrl: null },
+      create: { id: 'main-config', content: 'Configurações Gerais' },
+    });
+    return { message: 'Logo removida' };
+  }
+
+  // --- REMOVER FOTO QUEM SOMOS ---
+  @Delete('about-image')
+  async removeAboutImage() {
+    await this.prisma.aboutUs.upsert({
+      where: { id: 'main-config' },
+      update: { aboutImageUrl: null },
+      create: { id: 'main-config', content: 'Configurações Gerais' },
+    });
+    return { message: 'Imagem removida' };
   }
 
   // --- RETORNA TODAS AS CONFIGURAÇÕES ---

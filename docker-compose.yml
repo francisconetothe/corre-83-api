@@ -1,16 +1,17 @@
 services:
   db:
-    image: mysql:8 # Ou postgres:15
+    image: mysql:8
     container_name: corre-83-api
     restart: always
+    command: --mysql-native-password=ON
     environment:
       MYSQL_ROOT_PASSWORD: docker
-      MYSQL_DATABASE: corre83
+      MYSQL_DATABASE: correria83_db
     ports:
-      - "3306:3306"
+      - '3306:3306'
 
-  adminer: # Opcional: Interface visual para ver o banco no navegador
+  adminer:
     image: adminer
     restart: always
     ports:
-      - "8080:8080"
+      - '8080:8080'
