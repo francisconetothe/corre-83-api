@@ -23,8 +23,11 @@ export class ArtigosController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req, file, cb) => {
-          // process.cwd() garante que a pasta será criada na raiz do projeto tanto local quanto no Render
-          const uploadPath = join(process.cwd(), 'uploads', 'artigos');
+          // Usa UPLOAD_DIR (pasta persistente em produção) ou ./uploads local
+          const uploadPath = join(
+            process.env.UPLOAD_DIR || join(process.cwd(), 'uploads'),
+            'artigos',
+          );
           if (!existsSync(uploadPath))
             mkdirSync(uploadPath, { recursive: true });
           cb(null, uploadPath);
@@ -38,19 +41,18 @@ export class ArtigosController {
     }),
   )
   criar(@UploadedFile() file: Express.Multer.File, @Body() data: any) {
-    // 🌍 BUSCA A URL DA VARIÁVEL DE AMBIENTE OU USA O PADRÃO LOCAL
-    const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
+    // 🌍 URL pública dos uploads (public_html do domínio principal em produção)
+    const publicUrl = process.env.PUBLIC_UPLOAD_URL || 'http://localhost:3001';
 
     // Gera a URL completa dinamicamente
     const imageUrl = file
-      ? `${baseUrl}/uploads/artigos/${file.filename}`
+      ? `${publicUrl}/uploads/artigos/${file.filename}`
       : null;
 
-    // 💡 AQUI É A MUDANÇA: Repassamos explicitamente o columnistId no lugar do nome
     return this.artigosService.criar({
       title: data.title,
       content: data.content,
-      columnistId: data.columnistId, // 👈 Nova ligação com o banco!
+      columnistId: data.columnistId,
       imageUrl: imageUrl,
     });
   }

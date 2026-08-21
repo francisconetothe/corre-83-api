@@ -12,7 +12,8 @@ import {
 import { PartnersService } from './partners.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 @Controller('parceiros')
 export class PartnersController {
@@ -27,7 +28,15 @@ export class PartnersController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads', // 👈 Mesma pasta onde ficam suas provas e artigos
+        destination: (req, file, cb) => {
+          const uploadPath = join(
+            process.env.UPLOAD_DIR || join(process.cwd(), 'uploads'),
+            'parceiros',
+          );
+          if (!existsSync(uploadPath))
+            mkdirSync(uploadPath, { recursive: true });
+          cb(null, uploadPath);
+        },
         filename: (req, file, cb) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -42,8 +51,11 @@ export class PartnersController {
       throw new BadRequestException('A logomarca do parceiro é obrigatória.');
     }
 
-    // Se salvou o arquivo localmente, gera a URL relativa.
-    const logoUrl = file ? `/uploads/${file.filename}` : body.logoUrl;
+    const publicUrl = process.env.PUBLIC_UPLOAD_URL || 'http://localhost:3001';
+    // Se enviou arquivo, gera URL completa; senão, usa a logoUrl que veio no body
+    const logoUrl = file
+      ? `${publicUrl}/uploads/parceiros/${file.filename}`
+      : body.logoUrl;
 
     return this.partnersService.create({
       name: body.name,

@@ -11,7 +11,8 @@ import {
 import { ColumnistsService } from './columnists.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 @Controller('colunistas')
 export class ColumnistsController {
@@ -26,7 +27,15 @@ export class ColumnistsController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
+        destination: (req, file, cb) => {
+          const uploadPath = join(
+            process.env.UPLOAD_DIR || join(process.cwd(), 'uploads'),
+            'colunistas',
+          );
+          if (!existsSync(uploadPath))
+            mkdirSync(uploadPath, { recursive: true });
+          cb(null, uploadPath);
+        },
         filename: (req, file, cb) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
@@ -37,8 +46,10 @@ export class ColumnistsController {
     }),
   )
   create(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
-    // Coloque 'undefined' no lugar de 'null'
-    const photoUrl = file ? `/uploads/${file.filename}` : undefined;
+    const publicUrl = process.env.PUBLIC_UPLOAD_URL || 'http://localhost:3001';
+    const photoUrl = file
+      ? `${publicUrl}/uploads/colunistas/${file.filename}`
+      : undefined;
 
     return this.columnistsService.create({
       name: body.name,
